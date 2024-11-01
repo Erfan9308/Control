@@ -7,7 +7,7 @@ int ledRed = 9;            // Red LED for "dry" indicator
 int buttonPin = 6;         // Button for manual pump control (manual override)
 
 // Threshold value for soil moisture level
-int moistureThreshold = 400;  // Adjust this value based on your sensor's readings
+int moistureThreshold = 400;  // Adjust this value based on the sensor's readings
 
 void setup() {
   // Set up pins
@@ -35,22 +35,22 @@ void loop() {
   Serial.println(soilMoistureValue);
 
   // Check if soil is dry (moisture value below threshold) or if manual button is pressed
-  if (soilMoistureValue < moistureThreshold || buttonState == HIGH) {
-    // If soil is dry or button is pressed, turn on the water pump
+ if (!isWatering && (soilMoistureValue < moistureThreshold || buttonState == HIGH)) {
+    // Start watering
     digitalWrite(relayPin, HIGH);
-    // Turn on the red LED (dry status)
     digitalWrite(ledRed, HIGH);
-    // Turn off the green LED (wet status)
     digitalWrite(ledGreen, LOW);
-  } else {
-    // If soil is wet, turn off the water pump
-    digitalWrite(relayPin, LOW);
-    // Turn on the green LED (wet status)
-    digitalWrite(ledGreen, HIGH);
-    // Turn off the red LED (dry status)
-    digitalWrite(ledRed, LOW);
+    isWatering = true;
+    wateringStartTime = millis(); // Record start time
   }
 
-  // Delay for 1 second before the next sensor reading
+  // Check if watering time has passed
+  if (isWatering && millis() - wateringStartTime >= wateringDuration) {
+    digitalWrite(relayPin, LOW); // Stop watering
+    digitalWrite(ledRed, LOW);
+    digitalWrite(ledGreen, HIGH);
+    isWatering = false;
+  }
+
   delay(1000);
 }
